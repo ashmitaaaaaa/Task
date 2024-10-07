@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Biscuits</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            background-image: url(https://img.freepik.com/free-vector/dark-hexagonal-background-with-gradient-color_79603-1409.jpg?ga=GA1.1.1321090715.1728281189&semt=ais_hybrid);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-form {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-form h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #adeab0;
+        }
+        .dashboard {
+            display: none;
+        }
+        .dashboard-header {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .dashboard-header h2 {
+            margin: 0;
+            color: #333;
+        }
+        .dashboard-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .dashboard-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            flex: 1 1 300px;
+        }
+        .dashboard-card h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .task-list, .profile-list, .attendance-list {
+            list-style-type: none;
+        }
+        .task-list li, .profile-list li, .attendance-list li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .logout-btn {
+            background-color: #c92b1f;
+        }
+        .logout-btn:hover {
+            background-color: #d16b6b;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-page" class="login-container">
+        <form id="login-form" class="login-form">
+            <p style="font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: 45px; padding: 10px;">Diamond Technologies</p> 
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role">
+                    <option value="employee">Employee</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="dashboard-header">
+            <h2>Welcome, <span id="user-name"></span>!</h2>
+            <button id="logout-btn" class="btn logout-btn">Logout</button>
+        </div>
+        <div class="container dashboard-content">
+            <div class="dashboard-card">
+                <h3>Tasks</h3>
+                <ul id="task-list" class="task-list"></ul>
+            </div>
+            <div class="dashboard-card">
+                <h3>User Profiles</h3>
+                <ul id="profile-list" class="profile-list"></ul>
+            </div>
+            <div class="dashboard-card">
+                <h3>Attendance</h3>
+                <ul id="attendance-list" class="attendance-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock database
+        const mockDB = {
+            users: [
+                { id: 1, username: 'alice', password: 'alice123', role: 'admin', name: 'Alice' },
+                { id: 2, username: 'bob', password: 'bob123', role: 'employee', name: 'Bob' },
+                { id: 3, username: 'charlie', password: 'charlie123', role: 'employee', name: 'Charlie' },
+            ],
+            tasks: [
+                { id: 1, title: 'Develop new feature', assignedTo: 2, status: 'In Progress' },
+                { id: 2, title: 'Review code', assignedTo: 3, status: 'Pending' },
+                { id: 3, title: 'Plan next sprint', assignedTo: 1, status: 'Not Started' },
+            ],
+            attendance: []
+        };
+
+        let currentUser = null;
+
+        // DOM Elements
+        const loginPage = document.getElementById('login-page');
+        const loginForm = document.getElementById('login-form');
+        const dashboard = document.getElementById('dashboard');
+        const userName = document.getElementById('user-name');
+        const logoutBtn = document.getElementById('logout-btn');
+        const taskList = document.getElementById('task-list');
+        const profileList = document.getElementById('profile-list');
+        const attendanceList = document.getElementById('attendance-list');
+
+        // Login form submission
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            const user = mockDB.users.find(u => u.username === username && u.password === password && u.role === role);
+            if (user) {
+                currentUser = user;
+                mockDB.attendance.push({ userId: user.id, timestamp: new Date().toLocaleString() });
+                showDashboard();
+            } else {
+                alert('Invalid credentials');
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', function() {
+            currentUser = null;
+            showLoginPage();
+        });
+
+        function showDashboard() {
+            loginPage.style.display = 'none';
+            dashboard.style.display = 'block';
+            userName.textContent = currentUser.name;
+            updateDashboard();
+        }
+
+        function showLoginPage() {
+            dashboard.style.display = 'none';
+            loginPage.style.display = 'flex';
+            loginForm.reset();
+        }
+
+        function updateDashboard() {
+            // Update tasks
+            taskList.innerHTML = '';
+            mockDB.tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = `${task.title} - ${task.status}`;
+                if (currentUser.role === 'admin') {
+                    const select = document.createElement('select');
+                    mockDB.users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.name;
+                        if (user.id === task.assignedTo) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                    select.addEventListener('change', function() {
+                        task.assignedTo = parseInt(this.value);
+                        updateDashboard();
+                    });
+                    li.appendChild(select);
+                }
+                taskList.appendChild(li);
+            });
+
+            // Update profiles
+            profileList.innerHTML = '';
+            mockDB.users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = `${user.name} (${user.role})`;
+                profileList.appendChild(li);
+            });
+
+            // Update attendance
+            attendanceList.innerHTML = '';
+            mockDB.attendance.forEach(record => {
+                const user = mockDB.users.find(u => u.id === record.userId);
+                const li = document.createElement('li');
+                li.textContent = `${user.name} - ${record.timestamp}`;
+                attendanceList.appendChild(li);
+            });
+        }
+        showLoginPage();
+    </script>
+</body>
+</html>
